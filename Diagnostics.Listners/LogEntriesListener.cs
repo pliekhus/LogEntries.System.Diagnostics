@@ -26,7 +26,11 @@ namespace Diagnostics.Listeners
             if (!string.IsNullOrEmpty(ConfigurationManager.AppSettings["LogEntries.LogHostname"])) { LogHostname = bool.Parse(ConfigurationManager.AppSettings["LogEntries.LogHostname"]); }
             if (!string.IsNullOrEmpty(ConfigurationManager.AppSettings["LogEntries.HostName"])) { HostName = ConfigurationManager.AppSettings["LogEntries.HostName"]; }
             if (!string.IsNullOrEmpty(ConfigurationManager.AppSettings["LogEntries.LogID"])) { LogID = ConfigurationManager.AppSettings["LogEntries.LogID"]; }
+            if (!string.IsNullOrEmpty(ConfigurationManager.AppSettings["LogEntries.LogPattern"])) { LogPattern = ConfigurationManager.AppSettings["LogEntries.LogPattern"]; }
         }
+
+        private string _logPattern = "%e% %u% %t% %m%";
+        public string LogPattern { get { return _logPattern; } set { _logPattern = value; } }
 
         public string Token
         {
@@ -109,12 +113,16 @@ namespace Diagnostics.Listeners
 
         public override void Write(string message)
         {
-            _logEntries.AddLine(message);
+            WriteLine(message);
         }
 
         public override void WriteLine(string message)
         {
-            _logEntries.AddLine(message);
+            string formattedMessage = LogPattern.Replace("%e%", Environment.MachineName);
+            formattedMessage = formattedMessage.Replace("%u%", Environment.UserName);
+            formattedMessage = formattedMessage.Replace("%t%", string.Format("{0} {1}", DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()));
+            formattedMessage = formattedMessage.Replace("%m%", message);
+            _logEntries.AddLine(formattedMessage);
         }
 
         public override void Write(object o)
