@@ -20,6 +20,7 @@ namespace Diagnostics.Listeners
             if (!string.IsNullOrEmpty(ConfigurationManager.AppSettings["LogEntries.Debug"])) { Debug = bool.Parse(ConfigurationManager.AppSettings["LogEntries.Debug"]); }
             if (!string.IsNullOrEmpty(ConfigurationManager.AppSettings["LogEntries.UseHttpPut"])) { UseHttpPut = bool.Parse(ConfigurationManager.AppSettings["LogEntries.UseHttpPut"]); }
             if (!string.IsNullOrEmpty(ConfigurationManager.AppSettings["LogEntries.UseSsl"])) { UseSsl = bool.Parse(ConfigurationManager.AppSettings["LogEntries.UseSsl"]); }
+            if (!string.IsNullOrEmpty(ConfigurationManager.AppSettings["LogEntries.UseJson"])) { UseJson = bool.Parse(ConfigurationManager.AppSettings["LogEntries.UseJson"]); }
             if (!string.IsNullOrEmpty(ConfigurationManager.AppSettings["LogEntries.IsUsingDataHub"])) { IsUsingDataHub = bool.Parse(ConfigurationManager.AppSettings["LogEntries.IsUsingDataHub"]); }
             if (!string.IsNullOrEmpty(ConfigurationManager.AppSettings["LogEntries.DataHubAddr"])) { DataHubAddr = ConfigurationManager.AppSettings["LogEntries.DataHubAddr"]; }
             if (!string.IsNullOrEmpty(ConfigurationManager.AppSettings["LogEntries.DataHubPort"])) { DataHubPort = int.Parse(ConfigurationManager.AppSettings["LogEntries.DataHubPort"]); }
@@ -116,13 +117,35 @@ namespace Diagnostics.Listeners
             WriteLine(message);
         }
 
-        public override void WriteLine(string message)
+        public bool UseJson { get; set; }
+
+        private string FormatMessage(string message)
         {
             string formattedMessage = LogPattern.Replace("%e%", Environment.MachineName);
             formattedMessage = formattedMessage.Replace("%u%", Environment.UserName);
             formattedMessage = formattedMessage.Replace("%t%", string.Format("{0} {1}", DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()));
             formattedMessage = formattedMessage.Replace("%m%", message);
-            _logEntries.AddLine(formattedMessage);
+            return formattedMessage;
+        }
+
+        private string JsonMessage(string message)
+        {
+            string json = string.Format("{ dateTime: {0} {1}", DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString());
+            if (LogPattern.Contains("%e%")) { json = string.Format("{0},machineName: \"{1}\"", json, Environment.MachineName); }
+            if (LogPattern.Contains("%u%")) { json = string.Format("{0},userName: \"{1}\"", json, Environment.UserName); }
+            json = string.Format("{0},message: \"{1}\"", json, message);
+            json = string.Format("{0}}", json);
+            return json;
+        }
+
+        public override void WriteLine(string message)
+        {
+            string logMessage = string.Empty;
+
+            if (UseJson) { logMessage = JsonMessage(message); }
+            else { logMessage = FormatMessage(message); }
+
+            _logEntries.AddLine(logMessage);
         }
 
         public override void Write(object o)
