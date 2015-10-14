@@ -2,6 +2,7 @@
 using System;
 using System.Configuration;
 using System.Diagnostics;
+using System.Reflection;
 
 namespace Diagnostics.Listeners
 {
@@ -30,7 +31,7 @@ namespace Diagnostics.Listeners
             if (!string.IsNullOrEmpty(ConfigurationManager.AppSettings["LogEntries.LogPattern"])) { LogPattern = ConfigurationManager.AppSettings["LogEntries.LogPattern"]; }
         }
 
-        private string _logPattern = "%e% %u% %t% %m%";
+        private string _logPattern = "%a% %e% %u% %t% %m%";
         public string LogPattern { get { return _logPattern; } set { _logPattern = value; } }
 
         public string Token
@@ -122,6 +123,7 @@ namespace Diagnostics.Listeners
         private string FormatMessage(string message)
         {
             string formattedMessage = LogPattern.Replace("%e%", Environment.MachineName);
+            formattedMessage = formattedMessage.Replace("%a%", Assembly.GetEntryAssembly().FullName);
             formattedMessage = formattedMessage.Replace("%u%", Environment.UserName);
             formattedMessage = formattedMessage.Replace("%t%", string.Format("{0} {1}", DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()));
             formattedMessage = formattedMessage.Replace("%m%", message);
@@ -130,11 +132,12 @@ namespace Diagnostics.Listeners
 
         private string JsonMessage(string message)
         {
-            string json = string.Format("{ dateTime: {0} {1}", DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString());
+            string json = string.Format("{{ dateTime: \"{0} {1}\"", DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString());
+            if (LogPattern.Contains("%a%")) { json = string.Format("{0},assemblyName: \"{1}\"", json, Assembly.GetEntryAssembly().FullName); }
             if (LogPattern.Contains("%e%")) { json = string.Format("{0},machineName: \"{1}\"", json, Environment.MachineName); }
             if (LogPattern.Contains("%u%")) { json = string.Format("{0},userName: \"{1}\"", json, Environment.UserName); }
             json = string.Format("{0},message: \"{1}\"", json, message);
-            json = string.Format("{0}}", json);
+            json = string.Format("{0}}}", json);
             return json;
         }
 
