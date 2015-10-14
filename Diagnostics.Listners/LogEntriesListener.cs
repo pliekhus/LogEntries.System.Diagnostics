@@ -132,11 +132,11 @@ namespace Diagnostics.Listeners
 
         private string JsonMessage(string message)
         {
-            string json = string.Format("{{ dateTime: \"{0} {1}\"", DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString());
-            if (LogPattern.Contains("%a%")) { json = string.Format("{0},assemblyName: \"{1}\"", json, Assembly.GetEntryAssembly().FullName); }
-            if (LogPattern.Contains("%e%")) { json = string.Format("{0},machineName: \"{1}\"", json, Environment.MachineName); }
-            if (LogPattern.Contains("%u%")) { json = string.Format("{0},userName: \"{1}\"", json, Environment.UserName); }
-            json = string.Format("{0},message: \"{1}\"", json, message);
+            string json = string.Format("{{ \"dateTime\": \"{0} {1}\"", DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString());
+            if (LogPattern.Contains("%a%")) { json = string.Format("{0},\"assemblyName\": \"{1}\"", json, Assembly.GetEntryAssembly().FullName); }
+            if (LogPattern.Contains("%e%")) { json = string.Format("{0},\"machineName\": \"{1}\"", json, Environment.MachineName); }
+            if (LogPattern.Contains("%u%")) { json = string.Format("{0},\"userName\": \"{1}\"", json, Environment.UserName); }
+            json = string.Format("{0},\"message\": \"{1}\"", json, message);
             json = string.Format("{0}}}", json);
             return json;
         }
